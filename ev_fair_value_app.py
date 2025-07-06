@@ -5,7 +5,7 @@ import yfinance as yf
 st.set_page_config(page_title="Stock Fair Value Analyzer", layout="wide")
 st.title("📈 Stock Fair Value Estimator (EV/EBITDA Method)")
 
-GITHUB_CSV_URL = "https://raw.githubusercontent.com/yelurilakshman/stock-fair-value/main/stock_list.csv"
+GITHUB_CSV_URL = "https://github.com/xllakshman/ev_fair_value_app.py/blob/main/stock_list.csv"
 
 def get_fair_value(ticker, growth_rate=0.10):
     try:
@@ -89,7 +89,7 @@ if "output_df" not in st.session_state:
 if "csv_data" not in st.session_state:
     st.session_state["csv_data"] = None
 
-uploaded_file = st.file_uploader("Upload CSV with Symbol column", type="csv")
+uploaded_file = st.file_uploader("Upload CSV with tickers of your choice (ensure 'Symbol' as header)", type="csv")
 col1, col2 = st.columns([1, 1])
 with col1:
     run_uploaded = st.button("Run Uploaded File")
