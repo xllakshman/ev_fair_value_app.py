@@ -78,8 +78,14 @@ def ev_valuation(ticker):
             "Exit Point": exit_point,
             "Signal": "Buy" if fair_price > current_price else "Hold/Sell"
         }
-    except Exception as e:
+    except Exception:
         return None
+
+# Use session state to retain file and results after refresh
+if "output_df" not in st.session_state:
+    st.session_state["output_df"] = None
+if "csv_data" not in st.session_state:
+    st.session_state["csv_data"] = None
 
 uploaded_file = st.file_uploader("Upload CSV with Symbol column", type="csv")
 
@@ -91,16 +97,22 @@ if uploaded_file is not None:
         st.success(f"Processing {len(df)} tickers...")
         results = []
         for ticker in df["Symbol"]:
-            st.write(f"🔍 Evaluating: {ticker}")
             row = ev_valuation(ticker)
             if row:
                 results.append(row)
 
         if results:
             output_df = pd.DataFrame(results)
-            st.dataframe(output_df.sort_values(by="Undervalued (%)", ascending=False), use_container_width=True)
-
-            csv = output_df.to_csv(index=False).encode("utf-8")
-            st.download_button("📥 Download Full Report as CSV", data=csv, file_name="fair_value_report.csv", mime="text/csv")
+            st.session_state["output_df"] = output_df
+            st.session_state["csv_data"] = output_df.to_csv(index=False).encode("utf-8")
         else:
             st.warning("No valid data was retrieved.")
+
+# Display if session has output from previous run
+if st.session_state["output_df"] is not None:
+    st.subheader("📊 Fair Value Results")
+    st.dataframe(st.session_state["output_df"].sort_values(by="Undervalued (%)", ascending=False), use_container_width=True)
+    st.download_button("📥 Download Full Report as CSV",
+                       data=st.session_state["csv_data"],
+                       file_name="fair_value_report.csv",
+                       mime="text/csv")
