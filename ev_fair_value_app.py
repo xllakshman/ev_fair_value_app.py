@@ -101,7 +101,7 @@ if run_uploaded and uploaded_file:
     if "Symbol" not in df.columns:
         st.error("CSV must contain a column named 'Symbol'")
     else:
-        st.success(f"Processing {len(df)} uploaded tickers...")
+        st.success(f"Processing Default {len(df)} uploaded tickers, Please wait, otherwise, upload a fresh ticker of your choice via csv...")
         output_df = process_symbols(df)
         if not output_df.empty:
             st.session_state["output_df"] = output_df
