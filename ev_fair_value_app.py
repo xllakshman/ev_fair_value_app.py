@@ -5,7 +5,7 @@ import yfinance as yf
 st.set_page_config(page_title="Stock Fair Value Analyzer", layout="wide")
 st.title("📈 Stock Fair Value Estimator (EV/EBITDA Method)")
 
-GITHUB_CSV_URL = "https://github.com/xllakshman/ev_fair_value_app.py/blob/main/stock_list.csv"
+GITHUB_CSV_URL = "https://raw.githubusercontent.com/xllakshman/ev_fair_value_app.py/main/stock_list.csv"
 
 def get_fair_value(ticker, growth_rate=0.10):
     try:
