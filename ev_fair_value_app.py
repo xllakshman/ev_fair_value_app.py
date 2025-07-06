@@ -47,7 +47,11 @@ def ev_valuation(ticker):
         market = "India" if ticker.endswith(".NS") else "USA"
 
         underval_pct = ((fair_price - current_price) / current_price) * 100
-        if underval_pct > 30:
+
+        # Classification logic
+        if fair_price < 0 or underval_pct < 5:
+            band = "Over Valued"
+        elif underval_pct > 30:
             band = "Deep Discount"
         elif underval_pct > 20:
             band = "High Value"
@@ -59,8 +63,8 @@ def ev_valuation(ticker):
         high_3y = hist["High"].max() if not hist.empty else None
         low_3y = hist["Low"].min() if not hist.empty else None
 
-        entry_point = "Yes" if low_3y and current_price <= low_3y * 1.05 else "No"
-        exit_point = "Yes" if high_3y and current_price >= high_3y * 0.95 else "No"
+        entry_price = round(low_3y * 1.05, 2) if low_3y else "N/A"
+        exit_price = round(high_3y * 0.95, 2) if high_3y else "N/A"
 
         return {
             "Symbol": ticker,
@@ -74,14 +78,13 @@ def ev_valuation(ticker):
             "Industry": industry,
             "3Y High": round(high_3y, 2) if high_3y else "N/A",
             "3Y Low": round(low_3y, 2) if low_3y else "N/A",
-            "Entry Point": entry_point,
-            "Exit Point": exit_point,
+            "Entry Price": entry_price,
+            "Exit Price": exit_price,
             "Signal": "Buy" if fair_price > current_price else "Hold/Sell"
         }
     except Exception:
         return None
 
-# Use session state to retain file and results after refresh
 if "output_df" not in st.session_state:
     st.session_state["output_df"] = None
 if "csv_data" not in st.session_state:
@@ -116,3 +119,27 @@ if st.session_state["output_df"] is not None:
                        data=st.session_state["csv_data"],
                        file_name="fair_value_report.csv",
                        mime="text/csv")
+
+    with st.expander("📘 Column Glossary & Category Descriptions"):
+        st.markdown("""
+**Glossary:**
+
+- **Symbol**: Stock ticker symbol (e.g., AAPL, INFY.NS)  
+- **Name**: Full company name  
+- **Fair Value (EV)**: Estimated intrinsic price based on EV/EBITDA model  
+- **Current Price**: Latest market price from Yahoo Finance  
+- **Undervalued (%)**: How much lower the current price is compared to fair value  
+- **Valuation Band**: Classification based on discount level  
+  - `Over Valued`: Fair value < 0 or undervalued < 5%  
+  - `Fair/Premium`: Fair value near current price (5–18%)  
+  - `Undervalued`: 18–20% undervalued  
+  - `High Value`: 20–30% undervalued  
+  - `Deep Discount`: >30% undervalued  
+- **Market**: `India` or `USA`  
+- **Cap Size**: Company size by market cap (`Mega`, `Large`, `Mid`, `Small`)  
+- **Industry**: Sector of the company  
+- **3Y High/Low**: Highest/lowest stock price in past 3 years  
+- **Entry Price**: Suggested buy point (within 5% of 3Y low)  
+- **Exit Price**: Suggested sell point (within 5% of 3Y high)  
+- **Signal**: `Buy` if undervalued, otherwise `Hold/Sell`  
+        """)
