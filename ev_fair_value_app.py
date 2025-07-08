@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import yfinance as yf
-from backtest_utils import backtest_fair_value
 
 st.set_page_config(page_title="Stock Fair Value Analyzer", layout="wide")
 st.title("📈 Stock Fair Value Estimator (EV/EBITDA Method)")
@@ -63,7 +62,7 @@ def ev_valuation(ticker):
             "Name": company_name,
             "Fair Value (EV)": round(fair_price, 2),
             "Current Price": round(current_price, 2),
-            "Undervalued (%)": round(undervalal_pct, 2),
+            "Undervalued (%)": round(underval_pct, 2),
             "Valuation Band": band,
             "Market": market,
             "Cap Size": cap_type,
@@ -90,7 +89,7 @@ if "output_df" not in st.session_state:
 if "csv_data" not in st.session_state:
     st.session_state["csv_data"] = None
 
-uploaded_file = st.file_uploader("Upload CSV with Symbol column", type="csv")
+uploaded_file = st.file_uploader("Upload CSV with tickers of your choice (ensure 'Symbol' as header)", type="csv")
 col1, col2 = st.columns([1, 1])
 with col1:
     run_uploaded = st.button("Run Uploaded File")
@@ -102,7 +101,7 @@ if run_uploaded and uploaded_file:
     if "Symbol" not in df.columns:
         st.error("CSV must contain a column named 'Symbol'")
     else:
-        st.success(f"Processing {len(df)} uploaded tickers... Kindly Wait for 60 seconds for output")
+        st.success(f"Processing Default {len(df)} uploaded tickers, Please wait, otherwise, upload a fresh ticker of your choice via csv...")
         output_df = process_symbols(df)
         if not output_df.empty:
             st.session_state["output_df"] = output_df
@@ -110,7 +109,7 @@ if run_uploaded and uploaded_file:
 elif run_default or (uploaded_file is None and st.session_state["output_df"] is None):
     try:
         df = pd.read_csv(GITHUB_CSV_URL)
-        st.success(f"Processing {len(df)} GitHub tickers... . Kindly Wait for 60 seconds for output")
+        st.success(f"Processing Default {len(df)} uploaded tickers, Please wait, otherwise, upload a fresh ticker of your choice via csv...")
         output_df = process_symbols(df)
         if not output_df.empty:
             st.session_state["output_df"] = output_df
@@ -118,9 +117,9 @@ elif run_default or (uploaded_file is None and st.session_state["output_df"] is 
     except:
         st.error("Failed to load from GitHub.")
 
+# Display result in tabs with filter
 if st.session_state["output_df"] is not None:
-    tab1, tab2, tab3 = st.tabs(["📊 Filtered View", "📋 Full Raw Data", "📉 Backtest Results"])
-
+    tab1, tab2 = st.tabs(["📊 Filtered View", "📋 Full Raw Data"])
     with tab1:
         df = st.session_state["output_df"]
         with st.sidebar:
@@ -138,7 +137,6 @@ if st.session_state["output_df"] is not None:
                            data=filtered_df.to_csv(index=False).encode("utf-8"),
                            file_name="filtered_fair_value_report.csv",
                            mime="text/csv")
-
     with tab2:
         st.dataframe(st.session_state["output_df"].sort_values(by="Undervalued (%)", ascending=False), use_container_width=True)
         st.download_button("📥 Download Full Report as CSV",
@@ -146,28 +144,6 @@ if st.session_state["output_df"] is not None:
                            file_name="fair_value_report.csv",
                            mime="text/csv")
 
-    with tab3:
-        selected_stock = st.selectbox("Select a stock for backtesting", st.session_state["output_df"]["Symbol"])
-        selected_row = st.session_state["output_df"][st.session_state["output_df"]["Symbol"] == selected_stock].iloc[0]
-        fair_value = selected_row["Fair Value (EV)"]
-        backtest_df = backtest_fair_value(selected_stock, fair_value)
-        if backtest_df.empty:
-            st.warning("Backtest data not available for this stock.")
-        else:
-            st.subheader(f"Backtest Results: {selected_stock}")
-            st.dataframe(backtest_df, use_container_width=True)
-
-    import altair as alt
-
-    chart_data = backtest_df[["Year", "Simulated Fair Value", "Avg Market Price"]].melt("Year")
-    chart = alt.Chart(chart_data).mark_line(point=True).encode(
-    x="Year:O",
-    y=alt.Y("value:Q", title="Price"),
-    color="variable:N"
-    ).properties(title="Fair Value vs Market Price", width=700)
-
-    st.altair_chart(chart, use_container_width=True)
-        
     with st.expander("📘 Column Glossary & Category Descriptions"):
         st.markdown("""
 **Glossary:**
