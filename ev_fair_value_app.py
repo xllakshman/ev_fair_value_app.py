@@ -109,7 +109,7 @@ if run_uploaded and uploaded_file:
 elif run_default or (uploaded_file is None and st.session_state["output_df"] is None):
     try:
         df = pd.read_csv(GITHUB_CSV_URL)
-        st.success(f"Processing Default {len(df)} uploaded tickers, Please wait, otherwise, upload a fresh ticker of your choice via csv...")
+        st.success(f"Processing Default {len(df)} uploaded tickers, Please wait for 180 Sec, otherwise, upload a fresh ticker(s) of your choice via csv...")
         output_df = process_symbols(df)
         if not output_df.empty:
             st.session_state["output_df"] = output_df
